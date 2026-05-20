@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heating &amp; Cooling Curves | Level Up Chemistry</title>
+<style>
+/* ================================================================
+   CSS CUSTOM PROPERTIES — TEACHER: Edit colors here!
+   ================================================================ */
+:root {
+  /* --- Light Mode Palette --- */
+  --bg:        #e8eef8;
+  --surface:   #ffffff;
+  --surface2:  #f3f6fb;
+  --border:    #d0d8ec;
+  --text:      #14213d;
+  --muted:     #556080;
+  --primary:   #1a56db;      /* Main blue accent         */
+  --secondary: #059669;      /* Green accent             */
+  --accent:    #d97706;      /* Amber / formula color    */
+  --danger:    #dc2626;      /* Red for marker           */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.08);
+  --shadow:    0 3px 16px rgba(26,86,219,0.11);
+  --shadow-lg: 0 8px 32px rgba(26,86,219,0.15);
+  --r:  12px;   /* card border-radius */
+  --rs:  7px;   /* small border-radius */
+}
+body.night {
+  /* --- Night Mode Palette --- */
+  --bg:        #0b1120;
+  --surface:   #131c30;
+  --surface2:  #1a2540;
+  --border:    #263354;
+  --text:      #dce6f5;
+  --muted:     #7a90b8;
+  --primary:   #60a5fa;
+  --secondary: #34d399;
+  --accent:    #fbbf24;
+  --danger:    #f87171;
+  --shadow:    0 3px 16px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+}
+
+/* ================================================================
+   RESET & BASE
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background .3s, color .3s;
+}
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+/* --- Header --- */
+#hdr {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 18px;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
+  box-shadow: var(--shadow);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  z-index: 10;
+  min-height: 52px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.brand-ico {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(26,86,219,0.3));
+}
+.brand-sub {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: var(--secondary);
+  line-height: 1;
+}
+.brand-ttl {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* --- Controls --- */
+.ctrls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+select {
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: var(--rs);
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  padding: 5px 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+}
+select:hover { border-color: var(--primary); }
+
+/* Pill toggle group */
+.pg {
+  display: flex;
+  border-radius: var(--rs);
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+}
+.pg button {
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: all .18s;
+}
+.pg button:last-child { border-right: none; }
+.pg button.on { background: var(--primary); color: #fff; }
+.pg button.on-cool { background: #0369a1; color: #fff; }
+
+/* Icon buttons */
+.ibtn {
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: var(--rs);
+  border: 1.5px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all .18s;
+}
+.ibtn:hover { border-color: var(--primary); background: var(--primary); color: #fff; }
+
+/* --- Main split --- */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* ================================================================
+   LEFT PANEL — graph
+   ================================================================ */
+#lp {
+  flex: 0 0 70%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 6px 10px 12px;
+  min-width: 0;
+}
+#gw {
+  flex: 1;
+  background: var(--surface);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-lg);
+  border: 1.5px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  cursor: ew-resize;
+  user-select: none;
+  min-height: 0;
+}
+#cvs { display: block; width: 100%; height: 100%; }
+#hint {
+  position: absolute;
+  bottom: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10.5px;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 3px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ================================================================
+   RIGHT PANEL — info
+   ================================================================ */
+#rp {
+  flex: 0 0 30%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 10px 4px;
+  gap: 7px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 210px;
+  max-width: 380px;
+}
+#rp::-webkit-scrollbar { width: 3px; }
+#rp::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Particle container */
+#pw {
+  flex-shrink: 0;
+  height: 158px;
+  background: var(--surface);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  border: 1.5px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+#pvs { display: block; width: 100%; height: 100%; }
+.pl {
+  position: absolute; top: 7px; left: 9px;
+  font-size: 9.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.pp {
+  position: absolute; top: 7px; right: 9px;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: var(--primary); color: #fff;
+  max-width: 62%; text-align: right;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* Generic cards */
+.card {
+  background: var(--surface);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  border: 1.5px solid var(--border);
+  padding: 9px 12px;
+  flex-shrink: 0;
+}
+.ct {
+  font-size: 9.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--muted); margin-bottom: 7px;
+}
+
+/* State card */
+#tBig {
+  font-size: 30px; font-weight: 800;
+  color: var(--primary); line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+#pTxt { font-size: 13px; font-weight: 700; margin-top: 3px; }
+#sTxt { font-size: 11px; color: var(--muted); margin-top: 2px; font-style: italic; }
+
+/* Energy rows */
+.er {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0; font-size: 11.5px;
+  border-bottom: 1px solid var(--border);
+}
+.er:last-child { border-bottom: none; }
+.el { color: var(--muted); font-size: 11px; }
+.ev { font-weight: 700; text-align: right; font-size: 11px; max-width: 55%; }
+.ev.up   { color: #dc2626; }
+.ev.dn   { color: #1d4ed8; }
+.ev.flat { color: #059669; }
+body.night .ev.up   { color: #f87171; }
+body.night .ev.dn   { color: #60a5fa; }
+body.night .ev.flat { color: #34d399; }
+
+/* Formula card */
+.fb {
+  background: var(--surface2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--rs) var(--rs) 0;
+  padding: 8px 10px;
+}
+.fm {
+  font-size: 19px; font-weight: 900;
+  font-family: 'Courier New', 'Consolas', monospace;
+  color: var(--accent); margin-bottom: 2px;
+}
+.fn { font-size: 10px; font-weight: 800; color: var(--accent); margin-bottom: 3px; }
+.fd { color: var(--muted); font-size: 10.5px; line-height: 1.45; }
+
+/* Regents Check rows */
+.rr {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 3.5px 0; font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.rr:last-child { border-bottom: none; }
+.rq { color: var(--text); flex: 1; font-size: 10.5px; }
+.rb {
+  font-size: 9.5px; font-weight: 800;
+  padding: 2px 7px; border-radius: 10px;
+  white-space: nowrap; margin-left: 6px; letter-spacing: .5px;
+}
+.rb.yes { background: #dcfce7; color: #166534; }
+.rb.no  { background: #fee2e2; color: #991b1b; }
+.rb.mix { background: #fef3c7; color: #92400e; }
+body.night .rb.yes { background: #14532d; color: #86efac; }
+body.night .rb.no  { background: #450a0a; color: #fca5a5; }
+body.night .rb.mix { background: #451a03; color: #fcd34d; }
+
+/* Anchor statement */
+.anchor {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border-radius: var(--r);
+  padding: 10px 13px;
+  color: #fff;
+  font-size: 11.5px; font-style: italic; line-height: 1.55;
+  flex-shrink: 0;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+.aico {
+  font-style: normal; font-size: 15px;
+  display: block; opacity: .75; margin-bottom: 3px;
+}
+
+/* Substance fun-fact note */
+.sn {
+  background: var(--surface2);
+  border-left: 3px solid var(--secondary);
+  border-radius: 0 var(--rs) var(--rs) 0;
+  padding: 7px 10px;
+  font-size: 10.5px; color: var(--muted);
+  line-height: 1.45; flex-shrink: 0;
+}
+
+/* ================================================================
+   LOADING FADE
+   ================================================================ */
+#app { opacity: 0; animation: fadeIn .4s .1s ease forwards; }
+@keyframes fadeIn { to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============================================================
+       HEADER — brand, substance selector, mode toggle, night mode
+       ============================================================ -->
+  <div id="hdr">
+    <div class="brand">
+      <span class="brand-ico">⚗️</span>
+      <div>
+        <div class="brand-sub">Level Up Chemistry</div>
+        <div class="brand-ttl">Heating &amp; Cooling Curves Explorer</div>
+      </div>
+    </div>
+
+    <div class="ctrls">
+      <!-- Teacher: add/remove <option> values to match your SUBS data -->
+      <select id="subSel" title="Choose substance">
+        <option value="water">Water (H₂O)</option>
+        <option value="co2">Carbon Dioxide (CO₂)</option>
+        <option value="ethanol">Ethanol (C₂H₅OH)</option>
+        <option value="nitrogen">Nitrogen (N₂)</option>
+        <option value="nacl">Sodium Chloride (NaCl)</option>
+        <option value="benzene">Benzene (C₆H₆)</option>
+      </select>
+
+      <div class="pg">
+        <button id="hBtn" class="on">🔥 Heating</button>
+        <button id="cBtn">❄️ Cooling</button>
+      </div>
+
+      <button class="ibtn" id="dBtn">🌙 Night Mode</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div id="main">
+
+    <!-- LEFT: Graph canvas -->
+    <div id="lp">
+      <div id="gw">
+        <canvas id="cvs"></canvas>
+        <div id="hint">🖱️ Click or drag the <span style="color:#dc2626;font-weight:800;">●</span> marker along the curve to explore!</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Info panels -->
+    <div id="rp">
+
+      <!-- Particle Model -->
+      <div id="pw">
+        <div class="pl">Particle Model</div>
+        <div class="pp" id="ppLbl">Ice (Solid)</div>
+        <canvas id="pvs"></canvas>
+      </div>
+
+      <!-- Current State -->
+      <div class="card">
+        <div class="ct">📍 Current State</div>
+        <div id="tBig">-30.0°C</div>
+        <div id="pTxt">Ice (Solid)</div>
+        <div id="sTxt">Temperature is increasing ↑</div>
+      </div>
+
+      <!-- Energy Changes -->
+      <div class="card">
+        <div class="ct">⚡ Energy Changes</div>
+        <div class="er"><span class="el">Temperature</span><span class="ev up" id="eT">📈 Increasing</span></div>
+        <div class="er"><span class="el">Kinetic Energy (KE)</span><span class="ev up" id="eKE">📈 Increasing</span></div>
+        <div class="er"><span class="el">Potential Energy (PE)</span><span class="ev flat" id="ePE">➡️ Constant</span></div>
+        <div class="er"><span class="el">Particle Motion</span><span class="ev flat" id="eMo" style="max-width:58%">Vibrating in fixed positions</span></div>
+        <div class="er"><span class="el">Particle Spacing</span><span class="ev flat" id="eSp" style="max-width:58%">Tightly packed, orderly lattice</span></div>
+      </div>
+
+      <!-- Formula to Use -->
+      <div class="card">
+        <div class="ct">🧮 Formula to Use</div>
+        <div id="fBox">
+          <div class="fb">
+            <div class="fm">q = mc&Delta;T</div>
+            <div class="fn">Heat Capacity Formula</div>
+            <div class="fd">q = heat (J) &nbsp;·&nbsp; m = mass (g) &nbsp;·&nbsp; c = specific heat (J/g·°C) &nbsp;·&nbsp; ΔT = temp change (°C)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regents Check -->
+      <div class="card">
+        <div class="ct">🎯 Regents Check</div>
+        <div id="rBox"></div>
+      </div>
+
+      <!-- Anchor Statement -->
+      <div class="anchor">
+        <span class="aico">💡</span>
+        <span id="aText">Temperature is a measure of the average kinetic energy of particles.</span>
+      </div>
+
+      <!-- Substance Fun Fact -->
+      <div class="sn" id="sNote">Loading…</div>
+
+    </div><!-- /rp -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+/* ================================================================
+   LEVEL UP CHEMISTRY — Heating & Cooling Curves Explorer
+   Single-file app for NYS Regents Chemistry
+
+   ────────────────────────────────────────────────────────────────
+   TEACHER CUSTOMIZATION GUIDE
+   ────────────────────────────────────────────────────────────────
+   1. SUBSTANCES  → Edit the SUBS object below.
+      Each substance needs: name, formula, color (6-digit hex),
+      meltPoint, boilPoint (°C), minTemp, maxTemp,
+      solidName, liquidName (null if sublimes), gasName,
+      sublimes (true/false), segs (array of {type, w, lbl}),
+      and note (fun fact).
+      segs[].w values must sum to 1.0.
+      segs[].type must be: solid | melting | liquid | boiling | gas
+      (or "subliming" for substances that sublime like CO₂).
+
+   2. ANCHOR STATEMENTS → Edit the ANCHORS object.
+
+   3. REGENTS ANSWERS   → Edit the REGENTS_INFO object.
+
+   4. COLORS            → Edit CSS variables in :root and body.night.
+
+   5. FORMULAS          → Edit the getFormula() function.
+
+   6. GRAPH MARGINS     → Edit the MAR object.
+   ================================================================ */
+
+// ================================================================
+// SUBSTANCE DATA
+// Teacher: Edit or add substances here!
+// ================================================================
+const SUBS = {
+
+  // ---- Water ----
+  water: {
+    name: "Water",
+    formula: "H₂O",
+    color: "#1d4ed8",          // hex color for curve + particles
+    meltPoint: 0,              // melting point (°C)
+    boilPoint: 100,            // boiling point (°C)
+    minTemp: -30,              // coldest temp shown
+    maxTemp: 130,              // hottest temp shown
+    solidName: "Ice",          // label for solid phase
+    liquidName: "Water",       // label for liquid phase
+    gasName: "Steam",          // label for gas phase
+    sublimes: false,           // does it sublime instead of melt?
+    // Segment widths — visual proportions, NOT real energy ratios!
+    segs: [
+      { type: "solid",   w: 0.12, lbl: "Solid (Ice)"   },
+      { type: "melting", w: 0.18, lbl: "Melting"        },
+      { type: "liquid",  w: 0.15, lbl: "Liquid (Water)" },
+      { type: "boiling", w: 0.42, lbl: "Boiling"        },
+      { type: "gas",     w: 0.13, lbl: "Gas (Steam)"    },
+    ],
+    note: "💧 Water is less dense as ice than as liquid — that's why ice floats! Most substances are denser as solids. This is due to hydrogen bonding forming an open crystal lattice.",
+  },
+
+  // ---- Carbon Dioxide ----
+  co2: {
+    name: "Carbon Dioxide",
+    formula: "CO₂",
+    color: "#059669",
+    sublimationPoint: -78.5,   // sublimation temp (°C) — used instead of melt/boil
+    meltPoint: null,
+    boilPoint: null,
+    minTemp: -110, maxTemp: -40,
+    solidName: "Dry Ice", liquidName: null, gasName: "CO₂ Gas",
+    sublimes: true,            // no liquid phase at standard pressure
+    segs: [
+      { type: "solid",     w: 0.28, lbl: "Solid (Dry Ice)" },
+      { type: "subliming", w: 0.44, lbl: "Sublimation"     },
+      { type: "gas",       w: 0.28, lbl: "Gas"             },
+    ],
+    note: "🧊 CO₂ has NO liquid phase at standard pressure — it jumps directly solid→gas at -78.5°C (sublimation). Liquid CO₂ only exists above 5.1 atm of pressure!",
+  },
+
+  // ---- Ethanol ----
+  ethanol: {
+    name: "Ethanol",
+    formula: "C₂H₅OH",
+    color: "#7c3aed",
+    meltPoint: -114, boilPoint: 78.4,
+    minTemp: -130, maxTemp: 100,
+    solidName: "Solid Ethanol", liquidName: "Liquid Ethanol", gasName: "Ethanol Vapor",
+    sublimes: false,
+    segs: [
+      { type: "solid",   w: 0.12, lbl: "Solid"   },
+      { type: "melting", w: 0.15, lbl: "Melting"  },
+      { type: "liquid",  w: 0.18, lbl: "Liquid"   },
+      { type: "boiling", w: 0.42, lbl: "Boiling"  },
+      { type: "gas",     w: 0.13, lbl: "Gas"      },
+    ],
+    note: "🍷 Ethanol boils at 78°C — lower than water's 100°C. This difference makes fractional distillation possible to separate them by their boiling points!",
+  },
+
+  // ---- Nitrogen ----
+  nitrogen: {
+    name: "Nitrogen",
+    formula: "N₂",
+    color: "#0891b2",
+    meltPoint: -210, boilPoint: -196,
+    minTemp: -225, maxTemp: -180,
+    solidName: "Solid N₂", liquidName: "Liquid Nitrogen", gasName: "N₂ Gas",
+    sublimes: false,
+    segs: [
+      { type: "solid",   w: 0.13, lbl: "Solid"           },
+      { type: "melting", w: 0.09, lbl: "Melting"          },
+      { type: "liquid",  w: 0.12, lbl: "Liquid Nitrogen"  },
+      { type: "boiling", w: 0.53, lbl: "Boiling"          },
+      { type: "gas",     w: 0.13, lbl: "Gas"              },
+    ],
+    note: "❄️ Liquid nitrogen boils at -196°C at room temperature! It's used in cryogenics, food freezing, and medicine. It makes up ~78% of the air we breathe as a gas.",
+  },
+
+  // ---- Sodium Chloride ----
+  nacl: {
+    name: "Sodium Chloride",
+    formula: "NaCl",
+    color: "#d97706",
+    meltPoint: 801, boilPoint: 1413,
+    minTemp: 740, maxTemp: 1470,
+    solidName: "Salt Crystal", liquidName: "Molten NaCl", gasName: "NaCl Vapor",
+    sublimes: false,
+    segs: [
+      { type: "solid",   w: 0.12, lbl: "Solid (Salt)"   },
+      { type: "melting", w: 0.18, lbl: "Melting"          },
+      { type: "liquid",  w: 0.15, lbl: "Molten Salt"      },
+      { type: "boiling", w: 0.42, lbl: "Boiling"          },
+      { type: "gas",     w: 0.13, lbl: "Vapor"           },
+    ],
+    note: "🧂 NaCl melts at 801°C — very high! This reflects the strength of ionic bonds between Na⁺ and Cl⁻ ions. Molten NaCl conducts electricity, unlike solid NaCl.",
+  },
+
+  // ---- Benzene ----
+  benzene: {
+    name: "Benzene",
+    formula: "C₆H₆",
+    color: "#dc2626",
+    meltPoint: 5.5, boilPoint: 80.1,
+    minTemp: -15, maxTemp: 100,
+    solidName: "Solid Benzene", liquidName: "Liquid Benzene", gasName: "Benzene Vapor",
+    sublimes: false,
+    segs: [
+      { type: "solid",   w: 0.12, lbl: "Solid"   },
+      { type: "melting", w: 0.15, lbl: "Melting"  },
+      { type: "liquid",  w: 0.18, lbl: "Liquid"   },
+      { type: "boiling", w: 0.42, lbl: "Boiling"  },
+      { type: "gas",     w: 0.13, lbl: "Gas"      },
+    ],
+    note: "⚠️ Benzene melts at just 5.5°C — it can freeze in winter labs! It's an important organic solvent and reference compound. Note: benzene is a known carcinogen.",
+  },
+
+}; // end SUBS
+
+// ================================================================
+// ANCHOR STATEMENTS
+// Teacher: Edit these rotating student-friendly messages!
+// ================================================================
+const ANCHORS = {
+  solid:     "Temperature is a measure of the average kinetic energy of particles. In a solid, particles vibrate in fixed lattice positions.",
+  melting:   "During melting, heat energy breaks intermolecular attractions. Temperature stays constant — added energy increases potential energy, not KE!",
+  liquid:    "In the liquid phase, particles have enough kinetic energy to slide past each other. More heat → faster average particle speed.",
+  boiling:   "During boiling, energy separates particles against intermolecular attractions. Temperature stays constant while potential energy increases.",
+  gas:       "Gas particles move rapidly in all directions with much space between them. As heat is added, their average kinetic energy (speed) increases.",
+  subliming: "Sublimation: solid → gas directly, skipping the liquid phase! The substance absorbs energy to break all attractions at once.",
+  freezing:  "During freezing, particles release energy and slow down, forming an ordered lattice structure. Temperature stays constant throughout.",
+  condensing:"During condensation, gas particles release energy as they form intermolecular attractions. Temperature stays constant.",
+  depositing:"Deposition: gas → solid directly — the reverse of sublimation. Particles release energy and lock into a crystal structure.",
+};
+
+// ================================================================
+// REGENTS CHECK INFO
+// Teacher: Edit the YES/NO answers per segment type!
+// ================================================================
+const REGENTS_INFO = {
+  solid:      { tChg: "YES", keChg: "YES", peChg: "NO",  phases: "Solid only",     shape: "SLOPED" },
+  melting:    { tChg: "NO",  keChg: "NO",  peChg: "YES", phases: "Solid + Liquid", shape: "FLAT"   },
+  liquid:     { tChg: "YES", keChg: "YES", peChg: "NO",  phases: "Liquid only",    shape: "SLOPED" },
+  boiling:    { tChg: "NO",  keChg: "NO",  peChg: "YES", phases: "Liquid + Gas",   shape: "FLAT"   },
+  gas:        { tChg: "YES", keChg: "YES", peChg: "NO",  phases: "Gas only",       shape: "SLOPED" },
+  subliming:  { tChg: "NO",  keChg: "NO",  peChg: "YES", phases: "Solid + Gas",    shape: "FLAT"   },
+  freezing:   { tChg: "NO",  keChg: "NO",  peChg: "YES", phases: "Solid + Liquid", shape: "FLAT"   },
+  condensing: { tChg: "NO",  keChg: "NO",  peChg: "YES", phases: "Liquid + Gas",   shape: "FLAT"   },
+  depositing: { tChg: "NO",  keChg: "NO",  peChg: "YES", phases: "Solid + Gas",    shape: "FLAT"   },
+};
+
+// ================================================================
+// APP STATE
+// ================================================================
+let sub   = SUBS.water;   // Active substance object
+let heat  = true;         // Heating (true) or Cooling (false) mode
+let night = false;        // Night/dark mode
+let tPos  = 0.07;         // Marker position along curve (0→1)
+let drag  = false;        // Is user dragging the marker?
+let lastPh  = null;       // Last particle phase (for re-init detection)
+let lastSub = null;       // Last substance (for re-init detection)
+
+// Canvas elements and 2D contexts
+const CVS  = document.getElementById('cvs');
+const PVS  = document.getElementById('pvs');
+const cCtx = CVS.getContext('2d');
+const pCtx = PVS.getContext('2d');
+
+// Graph margins in pixels — Teacher: adjust if labels get clipped
+const MAR = { top: 40, right: 30, bottom: 54, left: 64 };
+let GW = 0, GH = 0; // Graph drawing area (computed each draw)
+
+// Particle objects array
+let parts  = [];
+let rafID  = null;
+
+// ================================================================
+// CURVE MATH — builds segment data with temperatures and x coords
+// ================================================================
+
+/**
+ * Builds the full list of curve segments with computed temperature
+ * ranges and normalized x positions.
+ * For cooling mode, reverses the segment order and swaps temps.
+ * Returns: [{type, w, lbl, startTemp, endTemp, x0, x1}, ...]
+ */
+function buildSegs() {
+  const s = sub;
+
+  // --- Compute temps for each segment (heating direction) ---
+  let arr = s.segs.map(seg => {
+    let st, et;
+    if (s.sublimes) {
+      const sp = s.sublimationPoint;
+      if (seg.type === 'solid')     { st = s.minTemp; et = sp; }
+      if (seg.type === 'subliming') { st = et = sp; }
+      if (seg.type === 'gas')       { st = sp; et = s.maxTemp; }
+    } else {
+      if (seg.type === 'solid')   { st = s.minTemp;   et = s.meltPoint; }
+      if (seg.type === 'melting') { st = et = s.meltPoint; }
+      if (seg.type === 'liquid')  { st = s.meltPoint; et = s.boilPoint; }
+      if (seg.type === 'boiling') { st = et = s.boilPoint; }
+      if (seg.type === 'gas')     { st = s.boilPoint; et = s.maxTemp; }
+    }
+    return { ...seg, startTemp: st, endTemp: et };
+  });
+
+  if (!heat) {
+    // --- Cooling: reverse, swap temps, rename types & labels ---
+    const typeMap = {
+      solid: 'solid', melting: 'freezing', liquid: 'liquid',
+      boiling: 'condensing', gas: 'gas', subliming: 'depositing',
+    };
+    const lblMap = {
+      solid:    arr.find(x => x.type === 'solid')?.lbl    || 'Solid',
+      melting:  'Freezing',
+      liquid:   arr.find(x => x.type === 'liquid')?.lbl   || 'Liquid',
+      boiling:  'Condensing',
+      gas:      arr.find(x => x.type === 'gas')?.lbl      || 'Gas',
+      subliming:'Deposition',
+    };
+    arr = arr.slice().reverse().map(seg => ({
+      ...seg,
+      type:      typeMap[seg.type]  || seg.type,
+      lbl:       lblMap[seg.type]   || seg.lbl,
+      startTemp: seg.endTemp,   // swap: what was the hot end becomes the start
+      endTemp:   seg.startTemp,
+    }));
+  }
+
+  // --- Assign cumulative x positions (0 to 1) ---
+  let cumX = 0;
+  return arr.map(seg => {
+    const x0 = cumX;
+    cumX += seg.w;
+    return { ...seg, x0, x1: cumX };
+  });
+}
+
+/**
+ * Returns { seg, temp, lt } at normalized position t (0→1).
+ * lt is local progress within the segment (0→1).
+ */
+function stateAt(t) {
+  const segs = buildSegs();
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    if (t <= seg.x1 || i === segs.length - 1) {
+      const lt = seg.w > 0 ? Math.max(0, Math.min(1, (t - seg.x0) / seg.w)) : 0;
+      const temp = seg.startTemp + (seg.endTemp - seg.startTemp) * lt;
+      return { seg, temp, lt };
+    }
+  }
+  // Fallback to last segment end
+  const last = segs[segs.length - 1];
+  return { seg: last, temp: last.endTemp, lt: 1 };
+}
+
+/** Convert normalized position t + temperature → canvas pixel {x,y} */
+function toPx(t, temp) {
+  return {
+    x: MAR.left + t * GW,
+    y: MAR.top + (1 - (temp - sub.minTemp) / (sub.maxTemp - sub.minTemp)) * GH,
+  };
+}
+
+/**
+ * Returns a human-readable phase name for display.
+ * Handles null liquidName (CO₂).
+ */
+function phName(type) {
+  const S = sub.solidName  || 'Solid';
+  const L = sub.liquidName || 'Liquid';
+  const G = sub.gasName    || 'Gas';
+  const map = {
+    solid:      S,
+    melting:    `${S} + ${L}`,
+    liquid:     L,
+    boiling:    `${L} + ${G}`,
+    gas:        G,
+    subliming:  `${S} + ${G}`,
+    freezing:   `${L} + ${S}`,
+    condensing: `${G} + ${L}`,
+    depositing: `${G} + ${S}`,
+  };
+  return map[type] || type;
+}
+
+// ================================================================
+// GRAPH DRAWING
+// ================================================================
+
+/** Region background color per segment type */
+function regionClr(type) {
+  const a = night ? 0.15 : 0.09;
+  const rgb = {
+    solid:      '29,78,216',  melting:   '5,150,105',
+    liquid:     '3,105,161',  boiling:   '217,119,6',
+    gas:        '220,38,38',  subliming: '124,58,237',
+    freezing:   '5,150,105',  condensing:'217,119,6',
+    depositing: '124,58,237',
+  };
+  return `rgba(${rgb[type] || '128,128,128'},${a})`;
+}
+
+/** Segment label text color */
+function segClr(type) {
+  const map = {
+    solid:      '#1d4ed8', melting:   '#047857',
+    liquid:     '#0369a1', boiling:   '#b45309',
+    gas:        '#b91c1c', subliming: '#6d28d9',
+    freezing:   '#047857', condensing:'#b45309',
+    depositing: '#6d28d9',
+  };
+  return map[type] || '#555';
+}
+
+/** Main graph drawing function — called on resize and interaction */
+function drawGraph() {
+  const W = CVS.width  = CVS.parentElement.clientWidth;
+  const H = CVS.height = CVS.parentElement.clientHeight;
+  GW = W - MAR.left - MAR.right;
+  GH = H - MAR.top  - MAR.bottom;
+
+  const ctx = cCtx;
+  const bgC    = night ? '#131c30' : '#ffffff';
+  const gridC  = night ? 'rgba(255,255,255,0.055)' : 'rgba(0,0,0,0.05)';
+  const axC    = night ? '#7a90b8' : '#6b7280';
+  const titleC = night ? '#60a5fa' : '#1a56db';
+  const noteC  = night ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.22)';
+
+  // Helpers
+  const tToY = t => MAR.top + (1 - (t - sub.minTemp) / (sub.maxTemp - sub.minTemp)) * GH;
+  const xToX = x => MAR.left + x * GW;
+
+  const segs = buildSegs();
+
+  // --- Background ---
+  ctx.fillStyle = bgC;
+  ctx.fillRect(0, 0, W, H);
+
+  // ---- 1. COLORED REGION BANDS ----
+  segs.forEach(seg => {
+    ctx.fillStyle = regionClr(seg.type);
+    ctx.fillRect(xToX(seg.x0), MAR.top, (seg.x1 - seg.x0) * GW, GH);
+  });
+
+  // ---- 2. GRID LINES ----
+  ctx.strokeStyle = gridC;
+  ctx.lineWidth   = 1;
+  // Horizontal (temperature)
+  for (let i = 0; i <= 8; i++) {
+    const t = sub.minTemp + (sub.maxTemp - sub.minTemp) * i / 8;
+    ctx.beginPath(); ctx.moveTo(MAR.left, tToY(t)); ctx.lineTo(MAR.left + GW, tToY(t)); ctx.stroke();
+  }
+  // Vertical (segment boundaries)
+  segs.forEach((seg, i) => {
+    if (i > 0) {
+      ctx.beginPath(); ctx.moveTo(xToX(seg.x0), MAR.top); ctx.lineTo(xToX(seg.x0), MAR.top + GH); ctx.stroke();
+    }
+  });
+
+  // ---- 3. AXES ----
+  ctx.strokeStyle = axC; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(MAR.left, MAR.top);
+  ctx.lineTo(MAR.left, MAR.top + GH);
+  ctx.lineTo(MAR.left + GW, MAR.top + GH);
+  ctx.stroke();
+
+  // ---- 4. Y-AXIS TEMPERATURE LABELS ----
+  ctx.fillStyle    = axC;
+  ctx.font         = '11px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i <= 8; i++) {
+    const t = sub.minTemp + (sub.maxTemp - sub.minTemp) * i / 8;
+    ctx.fillText(`${Math.round(t)}°C`, MAR.left - 5, tToY(t));
+  }
+
+  // Y-axis title (rotated vertical text)
+  ctx.save();
+  ctx.translate(13, MAR.top + GH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle    = titleC;
+  ctx.font         = 'bold 12px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Temperature (°C)', 0, 0);
+  ctx.restore();
+
+  // X-axis label
+  ctx.fillStyle    = titleC;
+  ctx.font         = 'bold 12px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText(heat ? 'Heat Added (Q) →' : 'Heat Removed (Q) →', MAR.left + GW / 2, MAR.top + GH + 30);
+
+  // ---- 5. PHASE-CHANGE TEMPERATURE DASHED LINES ----
+  // Draw a dashed guide line and label for each flat (phase-change) plateau
+  segs.forEach(seg => {
+    const isFlat = seg.startTemp === seg.endTemp;
+    if (!isFlat) return;
+    const y = tToY(seg.startTemp);
+    ctx.strokeStyle = night ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.13)';
+    ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(MAR.left, y); ctx.lineTo(xToX(seg.x0), y); ctx.stroke();
+    ctx.setLineDash([]);
+    // Phase-change temp label (highlighted)
+    ctx.fillStyle    = night ? '#fbbf24' : '#92400e';
+    ctx.font         = 'bold 10px "Segoe UI",system-ui,sans-serif';
+    ctx.textAlign    = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(`${seg.startTemp}°C`, MAR.left - 2, y - 1);
+  });
+
+  // ---- 6. CURVE LINE (gradient) ----
+  const grad = ctx.createLinearGradient(MAR.left, 0, MAR.left + GW, 0);
+  grad.addColorStop(0,   night ? '#3b82f6' : '#1d4ed8');
+  grad.addColorStop(0.5, night ? '#10b981' : '#059669');
+  grad.addColorStop(1,   night ? '#f87171' : '#dc2626');
+  ctx.beginPath();
+  ctx.strokeStyle = grad; ctx.lineWidth = 4;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  segs.forEach((seg, i) => {
+    const x1 = xToX(seg.x0), y1 = tToY(seg.startTemp);
+    const x2 = xToX(seg.x1), y2 = tToY(seg.endTemp);
+    if (i === 0) ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+  });
+  ctx.stroke();
+
+  // ---- 7. SEGMENT LABEL PILLS ----
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'top';
+  segs.forEach(seg => {
+    const midX = xToX((seg.x0 + seg.x1) / 2);
+    const ly   = MAR.top + 6;
+    ctx.font = 'bold 10px "Segoe UI",system-ui,sans-serif';
+    const tw = ctx.measureText(seg.lbl).width;
+    // Pill background
+    ctx.fillStyle = night ? 'rgba(19,28,48,0.90)' : 'rgba(255,255,255,0.92)';
+    rRect(ctx, midX - tw / 2 - 5, ly, tw + 10, 17, 4);
+    ctx.fill();
+    // Pill text
+    ctx.fillStyle = night ? lightenHex(segClr(seg.type), 40) : segClr(seg.type);
+    ctx.fillText(seg.lbl, midX, ly + 3.5);
+  });
+
+  // ---- 8. DRAGGABLE MARKER ----
+  const { seg: mSeg, temp: mTemp } = stateAt(tPos);
+  const { x: mx, y: my } = toPx(tPos, mTemp);
+
+  // Halo glow
+  const halo = ctx.createRadialGradient(mx, my, 0, mx, my, 24);
+  halo.addColorStop(0, 'rgba(220,38,38,0.30)');
+  halo.addColorStop(1, 'rgba(220,38,38,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(mx, my, 24, 0, 6.28); ctx.fill();
+
+  // Soft outer ring
+  ctx.fillStyle = 'rgba(220,38,38,0.18)';
+  ctx.beginPath(); ctx.arc(mx, my, 13, 0, 6.28); ctx.fill();
+
+  // Crosshair dashed lines to axes
+  ctx.strokeStyle = night ? 'rgba(220,38,38,0.28)' : 'rgba(220,38,38,0.22)';
+  ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(mx, MAR.top + GH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(MAR.left, my);     ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Marker dot
+  ctx.fillStyle   = '#dc2626';
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth   = 2.5;
+  ctx.beginPath(); ctx.arc(mx, my, 7.5, 0, 6.28); ctx.fill(); ctx.stroke();
+
+  // Tooltip above / below marker
+  const ttxt = `${mTemp.toFixed(1)}°C  —  ${mSeg.lbl}`;
+  ctx.font = 'bold 11.5px "Segoe UI",system-ui,sans-serif';
+  const tw2 = ctx.measureText(ttxt).width + 16;
+  let tx = mx - tw2 / 2;
+  let ty = my - 38;
+  if (ty < MAR.top + 2) ty = my + 14;
+  tx = Math.max(MAR.left, Math.min(tx, MAR.left + GW - tw2));
+  ctx.shadowColor = 'rgba(0,0,0,0.25)'; ctx.shadowBlur = 8;
+  ctx.fillStyle = '#dc2626'; rRect(ctx, tx, ty, tw2, 23, 5); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText(ttxt, tx + 8, ty + 11.5);
+
+  // ---- 9. SUBSTANCE LABEL (top-right) ----
+  ctx.fillStyle    = night ? lightenHex(sub.color, 60) : sub.color;
+  ctx.font         = 'bold 13px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign    = 'right'; ctx.textBaseline = 'top';
+  ctx.fillText(`${sub.name} (${sub.formula})`, MAR.left + GW - 5, MAR.top + 5);
+
+  // ---- 10. HEATING / COOLING MODE BADGE ----
+  ctx.fillStyle    = heat ? '#dc2626' : '#0369a1';
+  ctx.font         = 'bold 11px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign    = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText(heat ? '🔥 Heating Curve' : '❄️ Cooling Curve', MAR.left + 5, MAR.top + 5);
+
+  // ---- 11. FOOTNOTE ----
+  ctx.fillStyle    = noteC;
+  ctx.font         = '9px "Segoe UI",system-ui,sans-serif';
+  ctx.textAlign    = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText('* Segment widths are visual aids — NOT proportional to actual heat energy values', MAR.left + 4, H - 3);
+}
+
+/** Draw a rounded rectangle path (works in all browsers) */
+function rRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ================================================================
+// PARTICLE ANIMATION SYSTEM
+// ================================================================
+
+/**
+ * Phase configurations for particle behavior:
+ * spd = base speed, sz = particle radius,
+ * mode = 'grid' | 'partial' | 'free' | 'gas',
+ * N = number of particles
+ */
+const PCFG = {
+  solid:      { spd: 0.28, sz: 6.5, mode: 'grid',    N: 28 },
+  melting:    { spd: 1.70, sz: 6.2, mode: 'partial', N: 26 },
+  liquid:     { spd: 1.90, sz: 6.0, mode: 'free',    N: 26 },
+  boiling:    { spd: 3.80, sz: 5.5, mode: 'gas',     N: 24 },
+  gas:        { spd: 5.50, sz: 4.5, mode: 'gas',     N: 20 },
+  subliming:  { spd: 4.00, sz: 5.0, mode: 'gas',     N: 22 },
+  freezing:   { spd: 1.20, sz: 6.2, mode: 'partial', N: 26 },
+  condensing: { spd: 3.20, sz: 5.5, mode: 'gas',     N: 24 },
+  depositing: { spd: 3.50, sz: 5.2, mode: 'gas',     N: 22 },
+};
+
+/** Create (or recreate) the particle array for a given phase */
+function initParts(phase) {
+  const c = PCFG[phase] || PCFG.solid;
+  const W = PVS.parentElement.clientWidth;
+  const H = PVS.parentElement.clientHeight;
+  parts = [];
+
+  if (c.mode === 'grid') {
+    // Solid: orderly 6×5 grid, particles vibrate around home positions
+    const cols = 6, rows = 5;
+    for (let r = 0; r < rows; r++) {
+      for (let cc = 0; cc < cols; cc++) {
+        const hx = W / (cols + 1) * (cc + 1);
+        const hy = H / (rows + 1) * (r + 1);
+        parts.push({ x: hx, y: hy, hx, hy,
+          vx: (Math.random() - .5) * c.spd, vy: (Math.random() - .5) * c.spd,
+          sz: c.sz + Math.random() * 1.2, col: sub.color, mode: 'grid' });
+      }
+    }
+
+  } else if (c.mode === 'partial') {
+    // Melting / freezing: mix of grid particles and free-moving ones
+    const cols = 4, rows = 3;
+    for (let r = 0; r < rows; r++) {
+      for (let cc = 0; cc < cols; cc++) {
+        const hx = W / (cols + 1.5) * (cc + 1);
+        const hy = H / (rows + 2)   * (r + 1.5);
+        parts.push({ x: hx, y: hy, hx, hy,
+          vx: (Math.random() - .5) * c.spd, vy: (Math.random() - .5) * c.spd,
+          sz: c.sz + Math.random(), col: sub.color, mode: 'grid' });
+      }
+    }
+    const freeN = c.N - cols * rows;
+    for (let i = 0; i < freeN; i++) {
+      const m = c.sz * 2;
+      parts.push({ x: m + Math.random() * (W - m * 2), y: m + Math.random() * (H - m * 2),
+        hx: null, vx: (Math.random() - .5) * c.spd * 2.5, vy: (Math.random() - .5) * c.spd * 2.5,
+        sz: c.sz - 1.5 + Math.random(), col: sub.color, mode: 'free' });
+    }
+
+  } else {
+    // Liquid, gas, boiling, etc.: fully free-moving particles
+    const m = c.sz * 2;
+    for (let i = 0; i < c.N; i++) {
+      parts.push({ x: m + Math.random() * (W - m * 2), y: m + Math.random() * (H - m * 2),
+        hx: null, vx: (Math.random() - .5) * 2 * c.spd, vy: (Math.random() - .5) * 2 * c.spd,
+        sz: c.sz + Math.random() * 1.5, col: sub.color, mode: c.mode });
+    }
+  }
+}
+
+/** Update particle positions for one animation frame */
+function stepParts(phase) {
+  const c  = PCFG[phase] || PCFG.solid;
+  const W  = PVS.width, H = PVS.height;
+  const lq = phase === 'liquid' || phase === 'freezing'; // extra drag for liquid
+
+  parts.forEach(p => {
+    if (p.mode === 'grid' && p.hx !== null) {
+      // Spring force toward home position + random thermal vibration
+      p.vx += -(p.x - p.hx) * 0.18 + (Math.random() - .5) * c.spd;
+      p.vy += -(p.y - p.hy) * 0.18 + (Math.random() - .5) * c.spd;
+      p.vx *= 0.80; p.vy *= 0.80;
+    } else {
+      // Brownian-ish random walk with speed limit
+      p.vx += (Math.random() - .5) * 0.40;
+      p.vy += (Math.random() - .5) * 0.40;
+      const spd    = Math.hypot(p.vx, p.vy);
+      const maxSpd = c.spd * (p.mode === 'gas' ? 2.2 : 1.6);
+      if (spd > maxSpd) { p.vx = p.vx / spd * maxSpd; p.vy = p.vy / spd * maxSpd; }
+      if (lq) { p.vx *= 0.95; p.vy *= 0.95; }
+    }
+
+    p.x += p.vx; p.y += p.vy;
+
+    // Elastic boundary collision
+    if (p.x < p.sz)    { p.x = p.sz;    p.vx =  Math.abs(p.vx); }
+    if (p.x > W - p.sz){ p.x = W - p.sz;p.vx = -Math.abs(p.vx); }
+    if (p.y < p.sz)    { p.y = p.sz;    p.vy =  Math.abs(p.vy); }
+    if (p.y > H - p.sz){ p.y = H - p.sz;p.vy = -Math.abs(p.vy); }
+  });
+}
+
+/** Render all particles onto the particle canvas */
+function drawParts(phase) {
+  // Resize canvas if container changed
+  const newW = PVS.parentElement.clientWidth;
+  const newH = PVS.parentElement.clientHeight;
+  if (PVS.width !== newW || PVS.height !== newH) {
+    PVS.width = newW; PVS.height = newH;
+  }
+  const W   = PVS.width, H = PVS.height;
+  const ctx  = pCtx;
+  const isGas   = ['gas','boiling','subliming','condensing','depositing'].includes(phase);
+  const isSolid = ['solid','melting','freezing','depositing'].includes(phase);
+
+  // Background
+  ctx.fillStyle = night ? '#0b1120' : '#f0f5ff';
+  ctx.fillRect(0, 0, W, H);
+
+  // Lattice bond lines between nearby grid particles (solid phases)
+  if (isSolid) {
+    for (let i = 0; i < parts.length; i++) {
+      const a = parts[i];
+      if (!a.hx) continue;
+      for (let j = i + 1; j < parts.length; j++) {
+        const b = parts[j];
+        if (!b.hx) continue;
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < 58) {
+          const al = (1 - d / 58) * (night ? 0.20 : 0.12);
+          ctx.strokeStyle = `rgba(${night ? '255,255,255' : '0,0,0'},${al})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // Draw each particle
+  parts.forEach(p => {
+    // Motion trail for fast gas-phase particles
+    if (isGas && Math.hypot(p.vx, p.vy) > 0.5) {
+      const tg = ctx.createLinearGradient(p.x - p.vx * 5, p.y - p.vy * 5, p.x, p.y);
+      tg.addColorStop(0, 'rgba(0,0,0,0)');
+      tg.addColorStop(1, hexA(p.col, 0.18));
+      ctx.strokeStyle = tg; ctx.lineWidth = p.sz * 0.7; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(p.x - p.vx * 5, p.y - p.vy * 5); ctx.lineTo(p.x, p.y); ctx.stroke();
+    }
+
+    // Soft glow halo
+    const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.sz * 2.2);
+    grd.addColorStop(0, hexA(p.col, 0.22));
+    grd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grd; ctx.beginPath(); ctx.arc(p.x, p.y, p.sz * 2.2, 0, 6.28); ctx.fill();
+
+    // Sphere gradient body (3D illusion)
+    const bg = ctx.createRadialGradient(p.x - p.sz * .32, p.y - p.sz * .32, 0, p.x, p.y, p.sz);
+    bg.addColorStop(0, lightenHex(p.col, 70));
+    bg.addColorStop(1, p.col);
+    ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(p.x, p.y, p.sz, 0, 6.28); ctx.fill();
+
+    // Specular highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.beginPath(); ctx.arc(p.x - p.sz * .28, p.y - p.sz * .28, p.sz * .32, 0, 6.28); ctx.fill();
+  });
+}
+
+/** Main animation loop (runs every frame via requestAnimationFrame) */
+function animLoop() {
+  const { seg } = stateAt(tPos);
+  const ph = seg.type;
+
+  // Re-initialize particles if phase or substance changed
+  if (ph !== lastPh || sub !== lastSub) {
+    lastPh  = ph;
+    lastSub = sub;
+    initParts(ph);
+    document.getElementById('ppLbl').textContent = phName(ph);
+  }
+
+  stepParts(ph);
+  drawParts(ph);
+  rafID = requestAnimationFrame(animLoop);
+}
+
+// ================================================================
+// UI PANEL UPDATES — updates all right-panel text and badges
+// ================================================================
+
+/** Returns the formula HTML for the current position on the curve */
+function getFormula(phase) {
+  const isFlat = ['melting','boiling','subliming','freezing','condensing','depositing'].includes(phase);
+  const isVap  = ['boiling','condensing','subliming','depositing'].includes(phase);
+
+  if (!isFlat) {
+    // Teacher: edit formula text for sloped sections here
+    return `<div class="fb">
+      <div class="fm">q = mc&Delta;T</div>
+      <div class="fn">Heat Capacity Formula (sloped sections)</div>
+      <div class="fd"><b>q</b> = heat (J) &nbsp;·&nbsp; <b>m</b> = mass (g) &nbsp;·&nbsp;
+        <b>c</b> = specific heat capacity (J/g·°C) &nbsp;·&nbsp; <b>ΔT</b> = temp change (°C)
+        <br>Used whenever temperature is <em>changing</em>.</div>
+    </div>`;
+  } else if (isVap) {
+    // Teacher: edit formula text for boiling/condensing sections here
+    return `<div class="fb">
+      <div class="fm">q = mH<sub>v</sub></div>
+      <div class="fn">Heat of Vaporization (flat boiling/condensing sections)</div>
+      <div class="fd"><b>q</b> = heat (J) &nbsp;·&nbsp; <b>m</b> = mass (g) &nbsp;·&nbsp;
+        <b>H<sub>v</sub></b> = heat of vaporization (J/g)
+        <br>Used during <em>boiling, condensation, or sublimation</em>.</div>
+    </div>`;
+  } else {
+    // Teacher: edit formula text for melting/freezing sections here
+    return `<div class="fb">
+      <div class="fm">q = mH<sub>f</sub></div>
+      <div class="fn">Heat of Fusion (flat melting/freezing sections)</div>
+      <div class="fd"><b>q</b> = heat (J) &nbsp;·&nbsp; <b>m</b> = mass (g) &nbsp;·&nbsp;
+        <b>H<sub>f</sub></b> = heat of fusion (J/g)
+        <br>Used during <em>melting or freezing</em>.</div>
+    </div>`;
+  }
+}
+
+/** Particle motion and spacing descriptions per phase */
+const MOTION = {
+  solid:     'Vibrating in fixed positions (lattice)',
+  melting:   'Some particles breaking free from lattice',
+  liquid:    'Sliding past each other freely',
+  boiling:   'Some particles escaping to gas phase',
+  gas:       'Moving rapidly & randomly in all directions',
+  subliming: 'Solid particles jumping directly to gas phase',
+  freezing:  'Slowing down, forming ordered crystal structure',
+  condensing:'Gas particles slowing, forming liquid bonds',
+  depositing:'Gas particles freezing into solid lattice',
+};
+const SPACING = {
+  solid:     'Tightly packed, regular ordered lattice',
+  melting:   'Still close, gradually losing order',
+  liquid:    'Close together but randomly arranged',
+  boiling:   'Spreading apart, mix of dense & sparse areas',
+  gas:       'Far apart, random, large empty spaces',
+  subliming: 'Transitioning from compact solid to far-apart gas',
+  freezing:  'Drawing closer, forming regular order',
+  condensing:'Moving closer, forming intermolecular bonds',
+  depositing:'Converging into solid crystal lattice',
+};
+
+/** Update all right-panel elements based on current marker position */
+function updateUI() {
+  const { seg, temp } = stateAt(tPos);
+  const phase  = seg.type;
+  const isFlat = seg.startTemp === seg.endTemp;
+
+  // Temperature display
+  document.getElementById('tBig').textContent = `${temp.toFixed(1)}°C`;
+
+  // Phase name
+  const pn = phName(phase);
+  document.getElementById('pTxt').textContent = pn;
+  document.getElementById('ppLbl').textContent = pn;
+
+  // Segment direction text
+  const dirTxt = isFlat
+    ? '⚡ Phase change — temperature is constant'
+    : heat
+      ? 'Temperature is increasing ↑'
+      : 'Temperature is decreasing ↓';
+  document.getElementById('sTxt').textContent = dirTxt;
+
+  // Helper badge builders
+  const up   = v => `<span class="ev up">${v}</span>`;
+  const dn   = v => `<span class="ev dn">${v}</span>`;
+  const flat = v => `<span class="ev flat">${v}</span>`;
+
+  // Energy indicators
+  let tV, keV, peV;
+  if (isFlat) {
+    tV  = flat('➡️ Constant');
+    keV = flat('➡️ Constant');
+    peV = heat ? up('📈 Increasing') : dn('📉 Decreasing');
+  } else if (heat) {
+    tV  = up('📈 Increasing');
+    keV = up('📈 Increasing');
+    peV = flat('➡️ Constant');
+  } else {
+    tV  = dn('📉 Decreasing');
+    keV = dn('📉 Decreasing');
+    peV = flat('➡️ Constant');
+  }
+  document.getElementById('eT').innerHTML   = tV;
+  document.getElementById('eKE').innerHTML  = keV;
+  document.getElementById('ePE').innerHTML  = peV;
+  document.getElementById('eMo').textContent = MOTION[phase]  || '';
+  document.getElementById('eSp').textContent = SPACING[phase] || '';
+
+  // Formula box
+  document.getElementById('fBox').innerHTML = getFormula(phase);
+
+  // Regents Check badges
+  const ri = REGENTS_INFO[phase] || REGENTS_INFO.solid;
+  const badge = (ans, mix) => {
+    const cls = mix ? 'mix' : ans === 'YES' ? 'yes' : 'no';
+    return `<span class="rb ${cls}">${ans}</span>`;
+  };
+  document.getElementById('rBox').innerHTML = `
+    <div class="rr"><span class="rq">Is temperature changing?</span>${badge(ri.tChg)}</div>
+    <div class="rr"><span class="rq">Is kinetic energy changing?</span>${badge(ri.keChg)}</div>
+    <div class="rr"><span class="rq">Is potential energy changing?</span>${badge(ri.peChg)}</div>
+    <div class="rr"><span class="rq">Graph section shape:</span>${badge(ri.shape, true)}</div>
+    <div class="rr"><span class="rq">Phase(s) present:</span><span class="rb mix">${ri.phases}</span></div>
+  `;
+
+  // Anchor statement
+  document.getElementById('aText').textContent = ANCHORS[phase] || ANCHORS.solid;
+}
+
+// ================================================================
+// COLOR UTILITIES
+// ================================================================
+
+/** Convert hex color + alpha to rgba() string */
+function hexA(hex, a) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/** Lighten a 6-digit hex color by adding `amt` to each channel */
+function lightenHex(hex, amt) {
+  const r = Math.min(255, parseInt(hex.slice(1,3), 16) + amt);
+  const g = Math.min(255, parseInt(hex.slice(3,5), 16) + amt);
+  const b = Math.min(255, parseInt(hex.slice(5,7), 16) + amt);
+  return `rgb(${r},${g},${b})`;
+}
+
+// ================================================================
+// MOUSE & TOUCH INTERACTION
+// ================================================================
+
+/** Get normalized curve progress (0→1) from a clientX position */
+function tFromX(clientX) {
+  const rect = CVS.getBoundingClientRect();
+  const rx   = (clientX - rect.left) * (CVS.width / rect.width);
+  return Math.max(0, Math.min(1, (rx - MAR.left) / GW));
+}
+
+// Mouse events
+document.getElementById('gw').addEventListener('mousedown', e => {
+  drag = true;
+  tPos = tFromX(e.clientX);
+  updateUI(); drawGraph();
+});
+window.addEventListener('mousemove', e => {
+  if (!drag) return;
+  tPos = tFromX(e.clientX);
+  updateUI(); drawGraph();
+});
+window.addEventListener('mouseup', () => { drag = false; });
+
+// Touch events (Chromebook / tablet support)
+document.getElementById('gw').addEventListener('touchstart', e => {
+  e.preventDefault();
+  drag = true;
+  tPos = tFromX(e.touches[0].clientX);
+  updateUI(); drawGraph();
+}, { passive: false });
+window.addEventListener('touchmove', e => {
+  if (!drag) return;
+  e.preventDefault();
+  tPos = tFromX(e.touches[0].clientX);
+  updateUI(); drawGraph();
+}, { passive: false });
+window.addEventListener('touchend', () => { drag = false; });
+
+// ================================================================
+// CONTROL EVENT HANDLERS
+// ================================================================
+
+/** Substance dropdown change */
+document.getElementById('subSel').addEventListener('change', e => {
+  sub   = SUBS[e.target.value];
+  tPos  = 0.06;
+  lastPh = null; // Force particle re-init on next frame
+  document.getElementById('sNote').textContent = sub.note;
+  updateUI(); drawGraph();
+});
+
+/** Heating mode button */
+document.getElementById('hBtn').addEventListener('click', () => {
+  heat = true;
+  document.getElementById('hBtn').classList.add('on');
+  document.getElementById('hBtn').classList.remove('on-cool');
+  document.getElementById('cBtn').classList.remove('on');
+  document.getElementById('cBtn').classList.remove('on-cool');
+  tPos = 0.06; lastPh = null;
+  updateUI(); drawGraph();
+});
+
+/** Cooling mode button */
+document.getElementById('cBtn').addEventListener('click', () => {
+  heat = false;
+  document.getElementById('cBtn').classList.add('on');
+  document.getElementById('cBtn').classList.add('on-cool');
+  document.getElementById('hBtn').classList.remove('on');
+  tPos = 0.06; lastPh = null;
+  updateUI(); drawGraph();
+});
+
+/** Night mode toggle */
+document.getElementById('dBtn').addEventListener('click', () => {
+  night = !night;
+  document.body.classList.toggle('night', night);
+  document.getElementById('dBtn').textContent = night ? '☀️ Day Mode' : '🌙 Night Mode';
+  drawGraph();
+});
+
+/** Window resize: redraw graph to fit new size */
+window.addEventListener('resize', () => { drawGraph(); });
+
+// ================================================================
+// INITIALIZATION — run once on page load
+// ================================================================
+function init() {
+  // Set initial substance note
+  document.getElementById('sNote').textContent = sub.note;
+
+  // Initial particle canvas sizing
+  PVS.width  = PVS.parentElement.clientWidth;
+  PVS.height = PVS.parentElement.clientHeight;
+
+  // Populate initial UI
+  updateUI();
+  drawGraph();
+
+  // Start particle animation loop
+  animLoop();
+}
+
+// Start after first paint for smooth load
+requestAnimationFrame(init);
+
+</script>
+</body>
+</html>
